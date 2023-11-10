@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strings"
 	"testing"
+	"time"
 	"unsafe"
 )
 
@@ -25,24 +26,41 @@ type testGraph struct {
 	start, end    testPosition
 }
 
-func (graph *testGraph) initObstacle() {
-	graph.obstacle = make(map[testPosition]placeholder)
-	obstacleNum := graph.width * graph.height / 4
+func (graph *testGraph) RandObstacle(proportion float64) {
+	obstacleNum := int(float64(graph.width*graph.height) * proportion)
 	for i := 0; i < obstacleNum; i++ {
 		x, y := rand.Intn(graph.width), rand.Intn(graph.height)
 		graph.obstacle[testPosition{X: x, Y: y}] = placeholder{}
 	}
 }
 
+func (graph *testGraph) SetObstacle(obstacle []testPosition) {
+	for _, o := range obstacle {
+		graph.obstacle[o] = placeholder{}
+	}
+}
+
 func (graph *testGraph) Init(width, height int) {
 	graph.width, graph.height = width, height
-	graph.initObstacle()
+	graph.obstacle = make(map[testPosition]placeholder)
 	graph.start = testPosition{X: 0, Y: 0}
 	graph.end = testPosition{X: width - 1, Y: height - 1}
 }
 
+func (graph *testGraph) SetStart(position any) {
+	graph.start = position.(testPosition)
+}
+
 func (graph *testGraph) GetStart() any {
 	return graph.start
+}
+
+func (graph *testGraph) SetEnd(position any) {
+	graph.end = position.(testPosition)
+}
+
+func (graph *testGraph) GetEnd() any {
+	return graph.end
 }
 
 func (graph *testGraph) IsEnd(position any) bool {
@@ -134,34 +152,69 @@ func (graph *testGraph) Heuristic(position any) int {
 
 /*
 === RUN   TestAStar
-*  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
-*   0    *  *                       *     *  *        *  *     *
-*   1  2 *           *     *           *  *  *        *        *
-*  *   3 *     *                                               *
-*      4  5  6       *     *  *        *  *        *     *     *
-*     *  *   7    *     *     *           *  *              *  *
-*     *      8  9 10 *                             *  *        *
-*           *     11             *           *              *  *
-*     *     *     12 *           *  *           *              *
-*                 13 14    *                                   *
-*                 *  15 16 17 18       *           *  *     *  *
-*                    *        19    *  *  *              *     *
-*  *           *           *  20       *     *        *        *
-*                             21 *                          *  *
-*        *  *  *              22 *                             *
-*        *  *              *  23    *        *        *        *
-*  *              *  *     *  24 25 26 27 28 29 30 31 32 33 34 *
-*              *  *           *                    *        35 *
-*        *                                            *     36 *
-*                 *              *                          37 *
-*           *                                         *     38 *
-*  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
+  - *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
+  - *   0  1  2  3  4  5                                           *
+  - *                  6                                           *
+  - *                  7                                           *
+  - *                  8                                           *
+  - *                  9                                           *
+  - *                 10                                           *
+  - *                 11                                           *
+  - *                 12                                           *
+  - *                 13                                           *
+  - *                 14 15 16                                     *
+  - *                       17                         *           *
+  - *                       18                         *           *
+  - *                       19                         *           *
+  - *                       20 21 22                   *           *
+  - *                          *  23                   *           *
+  - *                          *  24                   *           *
+  - *                          *  25    *  *  *  *  *  *           *
+  - *                          *  26 27 28 29 30 31 32             *
+  - *                          *                    33             *
+  - *                          *                    34 35 36 37 38 *
+  - *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
+
+-
+  - *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
+  - *   0                                                          *
+  - *   1                                                          *
+  - *   2                                                          *
+  - *   3                                                          *
+  - *   4                                                          *
+  - *   5                                                          *
+  - *   6                                                          *
+  - *   7                                                          *
+  - *   8                                                          *
+  - *   9                                                          *
+  - *  10                                              *           *
+  - *  11                                              *           *
+  - *  12                                              *           *
+  - *  13 14 15 16 17 18 19 20 21 22                   *           *
+  - *                          *  23                   *           *
+  - *                          *  24                   *           *
+  - *                          *  25    *  *  *  *  *  *           *
+  - *                          *  26                               *
+  - *                          *  27                               *
+  - *                          *  28 29 30 31 32 33 34 35 36 37 38 *
+  - *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
+
 --- PASS: TestAStar (0.00s)
 */
 func TestAStar(t *testing.T) {
 	graph := testGraph{}
 	graph.Init(20, 20)
+	graph.SetObstacle([]testPosition{
+		{16, 16}, {16, 15}, {16, 14}, {16, 13}, {16, 12}, {16, 11},
+		{15, 16}, {14, 16}, {13, 16}, {12, 16}, {11, 16}, {10, 16},
+		{14, 8}, {15, 8}, {16, 8}, {17, 8}, {18, 8}, {19, 8},
+	})
 	path := AStar(&graph)
+	if path != nil {
+		graph.DisplayPath(path)
+	}
+
+	path = Bfs(&graph)
 	if path != nil {
 		graph.DisplayPath(path)
 	}
@@ -169,4 +222,30 @@ func TestAStar(t *testing.T) {
 	graph = testGraph{}
 	graph.Init(0, 0)
 	path = AStar(&graph)
+}
+
+/*
+=== RUN   TestAStar_Performance
+a* cost: 1.3871671s
+bfs cost: 761.1499ms
+--- PASS: TestAStar_Performance (3.71s)
+*/
+func TestAStar_Performance(t *testing.T) {
+	graph := testGraph{}
+	graph.Init(1000, 1000)
+	graph.RandObstacle(0.4)
+	path := AStar(&graph)
+	for path == nil {
+		graph.Init(1000, 1000)
+		graph.RandObstacle(0.4)
+		path = AStar(&graph)
+	}
+
+	start := time.Now()
+	AStar(&graph)
+	fmt.Printf("a* cost: %v\n", time.Since(start))
+
+	start = time.Now()
+	Bfs(&graph)
+	fmt.Printf("bfs cost: %v\n", time.Since(start))
 }

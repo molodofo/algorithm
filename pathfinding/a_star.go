@@ -1,27 +1,11 @@
+// refer to https://www.redblobgames.com/pathfinding/a-star/introduction.html
+
 package pathfinding
 
 import (
 	"container/heap"
 	"github.com/molodofo/algorithm-go/datastructure"
 )
-
-type Graph interface {
-	GetStart() any
-	IsEnd(position any) bool
-	Neighbors(position any) []any
-	Cost(position1, position2 any) int
-	Heuristic(position any) int
-}
-
-func getPath(current any, cameFrom map[any]any) []any {
-	path := make([]any, 0)
-	path = append(path, current)
-	current, ok := cameFrom[current]
-	for ; ok && current != nil; current, ok = cameFrom[current] {
-		path = append(path, current)
-	}
-	return path
-}
 
 func AStar(graph Graph) []any {
 	frontier := make(datastructure.PriorityQueue, 0)
